@@ -50,11 +50,11 @@ async function call(method, path, body, token) {
 
     // 3. Sinh viên
     const students = [
-        { MaSV: 'SV001', HoTen: 'Vũ Đức Hiếu', Email: 'hieuvd@qnu.edu.vn', Lop: 'DHKTPM20', Nganh: 'Công nghệ phần mềm', GPA: 3.45, MonDaHoc: 'Giải tích, Đại số tuyến tính, Lập trình căn bản, Cơ sở dữ liệu, Kiến trúc máy tính, Kỹ thuật phần mềm, Lập trình Web, Kiến trúc phần mềm', SoTCTichLuy: 122 },
-        { MaSV: 'SV002', HoTen: 'Lê Minh Châu', Email: 'chaulm@qnu.edu.vn', Lop: 'DHKTPM20', Nganh: 'Công nghệ phần mềm', GPA: 3.10, MonDaHoc: 'Giải tích, Đại số tuyến tính, Lập trình căn bản, Cơ sở dữ liệu, Kiến trúc máy tính, Kỹ thuật phần mềm, Kiến trúc phần mềm', SoTCTichLuy: 112 },
-        { MaSV: 'SV003', HoTen: 'Trần Quốc Đạt', Email: 'dattq@qnu.edu.vn', Lop: 'DHHTTT20', Nganh: 'Hệ thống thông tin', GPA: 2.85, MonDaHoc: 'Giải tích, Đại số tuyến tính, Lập trình căn bản, Cơ sở dữ liệu, Phân tích thiết kế HTTT', SoTCTichLuy: 105 },
-        { MaSV: 'SV004', HoTen: 'Nguyễn Thị Bích', Email: 'bichnt@qnu.edu.vn', Lop: 'DHKTPM21', Nganh: 'Công nghệ phần mềm', GPA: 2.20, MonDaHoc: 'Giải tích, Lập trình căn bản', SoTCTichLuy: 65 },
-        { MaSV: 'SV005', HoTen: 'Phạm Văn Nam', Email: 'nampv@qnu.edu.vn', Lop: 'DHKHMT20', Nganh: 'Khoa học máy tính', GPA: 3.35, MonDaHoc: 'Giải tích, Đại số tuyến tính, Cấu trúc dữ liệu & giải thuật, Học máy, Trí tuệ nhân tạo', SoTCTichLuy: 118 }
+        { MaSV: 'SV001', HoTen: 'Vũ Đức Hiếu', Email: 'hieuvd@qnu.edu.vn', Lop: 'DHKTPM20', Nganh: 'Công nghệ phần mềm', SoTCTichLuy: 122 },
+        { MaSV: 'SV002', HoTen: 'Lê Minh Châu', Email: 'chaulm@qnu.edu.vn', Lop: 'DHKTPM20', Nganh: 'Công nghệ phần mềm', SoTCTichLuy: 112 },
+        { MaSV: 'SV003', HoTen: 'Trần Quốc Đạt', Email: 'dattq@qnu.edu.vn', Lop: 'DHHTTT20', Nganh: 'Hệ thống thông tin', SoTCTichLuy: 105 },
+        { MaSV: 'SV004', HoTen: 'Nguyễn Thị Bích', Email: 'bichnt@qnu.edu.vn', Lop: 'DHKTPM21', Nganh: 'Công nghệ phần mềm', SoTCTichLuy: 65 },
+        { MaSV: 'SV005', HoTen: 'Phạm Văn Nam', Email: 'nampv@qnu.edu.vn', Lop: 'DHKHMT20', Nganh: 'Khoa học máy tính', SoTCTichLuy: 118 }
     ];
     for (const s of students) {
         const r = await put(`Sinh viên ${s.MaSV} - ${s.HoTen}`, 'POST', '/api/students', s);
@@ -72,9 +72,7 @@ async function call(method, path, body, token) {
             Nganh: 'Công nghệ phần mềm',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Cơ sở dữ liệu, Kiến trúc phần mềm',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.50
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT002',
@@ -85,9 +83,7 @@ async function call(method, path, body, token) {
             Nganh: 'Công nghệ phần mềm',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Cơ sở dữ liệu, Kỹ thuật phần mềm',
-            GioiHanSV: 4,
-            DiemGPAToiThieu: 2.80
+            GioiHanSV: 4
         },
         {
             MaDT: 'DT003',
@@ -98,9 +94,7 @@ async function call(method, path, body, token) {
             Nganh: 'Công nghệ phần mềm',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Lập trình thiết bị di động, Cơ sở dữ liệu',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.50
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT004',
@@ -111,9 +105,7 @@ async function call(method, path, body, token) {
             Nganh: 'Công nghệ phần mềm',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Lập trình Web, Kiến trúc phần mềm',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.60
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT005',
@@ -124,9 +116,7 @@ async function call(method, path, body, token) {
             Nganh: 'Công nghệ phần mềm',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Kiểm thử phần mềm, Kỹ thuật phần mềm',
-            GioiHanSV: 2,
-            DiemGPAToiThieu: 2.70
+            GioiHanSV: 2
         },
         {
             MaDT: 'DT006',
@@ -137,9 +127,7 @@ async function call(method, path, body, token) {
             Nganh: 'Hệ thống thông tin',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Cơ sở dữ liệu, Phân tích thiết kế HTTT',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.50
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT007',
@@ -150,9 +138,7 @@ async function call(method, path, body, token) {
             Nganh: 'Hệ thống thông tin',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Cơ sở dữ liệu, An toàn thông tin',
-            GioiHanSV: 2,
-            DiemGPAToiThieu: 2.60
+            GioiHanSV: 2
         },
         {
             MaDT: 'DT008',
@@ -163,9 +149,7 @@ async function call(method, path, body, token) {
             Nganh: 'Hệ thống thông tin',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Phân tích thiết kế HTTT, Cơ sở dữ liệu',
-            GioiHanSV: 4,
-            DiemGPAToiThieu: 2.50
+            GioiHanSV: 4
         },
         {
             MaDT: 'DT009',
@@ -176,9 +160,7 @@ async function call(method, path, body, token) {
             Nganh: 'Hệ thống thông tin',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Cơ sở dữ liệu, Phân tích thiết kế HTTT',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.50
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT010',
@@ -189,9 +171,7 @@ async function call(method, path, body, token) {
             Nganh: 'Trí tuệ nhân tạo',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Học máy, Xử lý ngôn ngữ tự nhiên',
-            GioiHanSV: 2,
-            DiemGPAToiThieu: 3.00
+            GioiHanSV: 2
         },
         {
             MaDT: 'DT011',
@@ -202,9 +182,7 @@ async function call(method, path, body, token) {
             Nganh: 'Trí tuệ nhân tạo',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Thị giác máy tính, Học máy',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.80
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT012',
@@ -215,9 +193,7 @@ async function call(method, path, body, token) {
             Nganh: 'Trí tuệ nhân tạo',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Thị giác máy tính, Cấu trúc dữ liệu & giải thuật',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.90
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT013',
@@ -228,9 +204,7 @@ async function call(method, path, body, token) {
             Nganh: 'Khoa học máy tính',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Cấu trúc dữ liệu & giải thuật, Trí tuệ nhân tạo',
-            GioiHanSV: 2,
-            DiemGPAToiThieu: 2.80
+            GioiHanSV: 2
         },
         {
             MaDT: 'DT014',
@@ -241,9 +215,7 @@ async function call(method, path, body, token) {
             Nganh: 'Kỹ thuật dữ liệu',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Cơ sở dữ liệu, Khai phá dữ liệu',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.70
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT015',
@@ -254,9 +226,7 @@ async function call(method, path, body, token) {
             Nganh: 'Mạng máy tính & An toàn thông tin',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Mạng máy tính, An toàn thông tin',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.60
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT016',
@@ -267,9 +237,7 @@ async function call(method, path, body, token) {
             Nganh: 'Mạng máy tính & An toàn thông tin',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Mật mã học, An toàn thông tin',
-            GioiHanSV: 2,
-            DiemGPAToiThieu: 2.80
+            GioiHanSV: 2
         },
         {
             MaDT: 'DT017',
@@ -280,9 +248,7 @@ async function call(method, path, body, token) {
             Nganh: 'Khoa học máy tính',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Hệ thống nhúng và IoT, Mạng máy tính',
-            GioiHanSV: 4,
-            DiemGPAToiThieu: 2.50
+            GioiHanSV: 4
         },
         {
             MaDT: 'DT018',
@@ -293,9 +259,7 @@ async function call(method, path, body, token) {
             Nganh: 'Sư phạm Tin học',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Lập trình đồ họa, Phương pháp dạy học Tin học',
-            GioiHanSV: 3,
-            DiemGPAToiThieu: 2.50
+            GioiHanSV: 3
         },
         {
             MaDT: 'DT019',
@@ -306,9 +270,7 @@ async function call(method, path, body, token) {
             Nganh: 'Toán ứng dụng',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Xác suất thống kê, Đại số tuyến tính',
-            GioiHanSV: 2,
-            DiemGPAToiThieu: 2.70
+            GioiHanSV: 2
         },
         {
             MaDT: 'DT020',
@@ -319,9 +281,7 @@ async function call(method, path, body, token) {
             Nganh: 'Công nghệ phần mềm',
             SoTinChi: 10,
             HocKy: 'Học kỳ 1 (Niên khóa 2022 - 2026)',
-            MonBatBuoc: 'Lập trình Web, Thiết kế giao diện UI/UX',
-            GioiHanSV: 4,
-            DiemGPAToiThieu: 2.50
+            GioiHanSV: 4
         }
     ];
 

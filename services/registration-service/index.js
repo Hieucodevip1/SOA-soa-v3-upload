@@ -60,7 +60,7 @@ createService({
             { method: 'GET', path: '/api/registrations', summary: 'Danh sách đăng ký (kèm họ tên SV, tên đề tài lấy từ dịch vụ khác).' },
             { method: 'GET', path: '/api/registrations/counts', summary: 'Số lượng sinh viên đã đăng ký theo từng đề tài' },
             { method: 'GET', path: '/api/registrations/:id', summary: 'Chi tiết đăng ký' },
-            { method: 'POST', path: '/api/registrations', summary: 'Đăng ký đề tài (kiểm tra SV/đề tài, môn bắt buộc khóa trước, GPA tối thiểu, giới hạn số lượng SV)', body: ['MaSV', 'MaDT', 'NgayDangKy', 'TrangThai', 'Diem'], required: ['MaDT'], types: { Diem: 'number' }, enums: { TrangThai: STATUSES } },
+            { method: 'POST', path: '/api/registrations', summary: 'Đăng ký đề tài (kiểm tra SV/đề tài, giới hạn số lượng SV)', body: ['MaSV', 'MaDT', 'NgayDangKy', 'TrangThai', 'Diem'], required: ['MaDT'], types: { Diem: 'number' }, enums: { TrangThai: STATUSES } },
             { method: 'PUT', path: '/api/registrations/:id', summary: 'Cập nhật đăng ký / trạng thái / điểm / nhận xét', roles: ['admin', 'giangvien'] },
             { method: 'PUT', path: '/api/registrations/:id/approve', summary: 'Duyệt đăng ký (chuyển sang Đã duyệt đăng ký)', roles: ['admin', 'giangvien'] },
             { method: 'PUT', path: '/api/registrations/:id/reject', summary: 'Từ chối đăng ký', roles: ['admin', 'giangvien'], body: ['LyDoTuChoi'] },
@@ -90,19 +90,7 @@ createService({
             await pool.query("ALTER TABLE DANGKY ADD COLUMN IF NOT EXISTS LyDoTuChoi VARCHAR(255) NULL");
         } catch { /* Bỏ qua nếu đã có */ }
 
-        // Khởi tạo đăng ký mẫu nếu bảng rỗng
-        const [[{ count }]] = await pool.query('SELECT COUNT(*) AS count FROM DANGKY');
-        if (count === 0) {
-            await pool.query(
-                `INSERT INTO DANGKY (MaSV, MaDT, NgayDangKy, TrangThai, Diem, NhanXet, LyDoTuChoi) VALUES
-                 ('SV001', 'DT001', '2026-10-15', 'Da duyet', 9.50, 'Đồ án hoàn thành xuất sắc, báo cáo tự tin.', NULL),
-                 ('SV002', 'DT002', '2026-10-18', 'Da duyet', NULL, 'Đạt điều kiện tiên quyết và GPA.', NULL),
-                 ('SV003', 'DT006', '2026-10-22', 'Cho duyet', NULL, NULL, NULL),
-                 ('SV004', 'DT003', '2026-10-23', 'Tu choi', NULL, NULL, 'Chưa hoàn thành môn tiên quyết Lập trình thiết bị di động'),
-                 ('SV005', 'DT013', '2026-10-20', 'Da duyet', 8.50, 'Thuật toán di truyền tối ưu tốt.', NULL)`
-            );
-            log('Đã nạp 5 đăng ký mẫu chuẩn (SV001 -> SV005)');
-        }
+
 
         // ----- Gọi dịch vụ khác -----
         async function fetchMany(service, basePath, ids, key) {
@@ -134,15 +122,12 @@ createService({
                     HoTen: s.status === 'fulfilled' ? (sv ? sv.HoTen : '(sinh viên không tồn tại)') : '(student-service không khả dụng)',
                     Lop: sv ? sv.Lop : '',
                     NganhSV: sv ? sv.Nganh : '',
-                    GPA: sv ? sv.GPA : null,
                     TenDT: t.status === 'fulfilled' ? (dt ? dt.TenDT : '(đề tài không tồn tại)') : '(topic-service không khả dụng)',
                     GiangVienHuongDan: dt ? dt.GiangVienHuongDan : '',
                     MaGV: dt ? dt.MaGV : '',
                     NganhDT: dt ? dt.Nganh : '',
                     SoTinChi: dt ? dt.SoTinChi : 10,
-                    MonBatBuoc: dt ? dt.MonBatBuoc : '',
-                    GioiHanSV: dt ? dt.GioiHanSV : 5,
-                    DiemGPAToiThieu: dt ? dt.DiemGPAToiThieu : 2.50
+                    GioiHanSV: dt ? dt.GioiHanSV : 5
                 };
             });
             return { data, degraded };
@@ -253,26 +238,7 @@ createService({
                 throw new HttpError(400, `Lớp học phần/đề tài "${topic.TenDT}" đã đủ số lượng đăng ký tối đa (${limit} sinh viên). Vui lòng chọn đề tài khác.`);
             }
 
-            // 3. Kiểm tra điều kiện điểm GPA tối thiểu
-            const minGpa = topic.DiemGPAToiThieu !== undefined && topic.DiemGPAToiThieu !== null ? Number(topic.DiemGPAToiThieu) : 0;
-            const svGpa = student.GPA !== undefined && student.GPA !== null ? Number(student.GPA) : 0;
-            if (minGpa > 0 && svGpa < minGpa) {
-                throw new HttpError(400, `Điểm GPA của bạn (${svGpa.toFixed(2)}) chưa đạt mức tối thiểu (${minGpa.toFixed(2)}) để đăng ký học phần này.`);
-            }
-
-            // 4. Kiểm tra điều kiện môn học bắt buộc khóa trước (Prerequisites)
-            if (topic.MonBatBuoc && topic.MonBatBuoc.trim()) {
-                const requiredSubjects = topic.MonBatBuoc.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-                if (requiredSubjects.length > 0) {
-                    const passedSubjects = (student.MonDaHoc || '').toLowerCase();
-                    const missing = requiredSubjects.filter((reqSub) => !passedSubjects.includes(reqSub));
-                    if (missing.length > 0) {
-                        throw new HttpError(400, `Bạn chưa hoàn thành môn học bắt buộc khóa trước: "${missing.join(', ')}". Vui lòng kiểm tra lại chương trình đào tạo.`);
-                    }
-                }
-            }
-
-            // 5. Kiểm tra quy tắc 1 SV - 1 đề tài còn hiệu lực
+            // 3. Kiểm tra quy tắc 1 SV - 1 đề tài còn hiệu lực
             if (!INACTIVE.includes(status)) await assertNoActive(b.MaSV);
 
             const [r] = await pool.query(

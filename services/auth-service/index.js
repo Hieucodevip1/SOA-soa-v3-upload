@@ -71,42 +71,7 @@ createService({
             await pool.query("ALTER TABLE TAIKHOAN ADD COLUMN IF NOT EXISTS Nganh VARCHAR(100) NULL DEFAULT 'Công nghệ phần mềm'");
         } catch (e) { /* MySQL phiên bản cũ không hỗ trợ IF NOT EXISTS trong ALTER thì bỏ qua nếu đã có */ }
 
-        // Khởi tạo các tài khoản mặc định chuẩn QNU
-        const defaultHash = await bcrypt.hash('123456', 10);
-        const seedUsers = [
-            { u: 'admin', p: defaultHash, n: 'Quản trị viên hệ thống', r: 'admin', e: 'admin@qnu.edu.vn', m: null, d: 'Toàn trường' },
-            { u: 'GV001', p: defaultHash, n: 'TS. Nguyễn Thanh Bình', r: 'giangvien', e: 'binhnt@qnu.edu.vn', m: 'GV001', d: 'Công nghệ phần mềm' },
-            { u: 'GV002', p: defaultHash, n: 'ThS. Trần Thị Mai', r: 'giangvien', e: 'maitt@qnu.edu.vn', m: 'GV002', d: 'Hệ thống thông tin' },
-            { u: 'GV003', p: defaultHash, n: 'TS. Vũ Thị Phương', r: 'giangvien', e: 'phuongvt@qnu.edu.vn', m: 'GV003', d: 'Trí tuệ nhân tạo' },
-            { u: 'GV004', p: defaultHash, n: 'PGS.TS. Lê Văn Hoàng', r: 'giangvien', e: 'hoanglv@qnu.edu.vn', m: 'GV004', d: 'Khoa học máy tính' },
-            { u: 'GV005', p: defaultHash, n: 'ThS. Phạm Quốc Tuấn', r: 'giangvien', e: 'tuanpq@qnu.edu.vn', m: 'GV005', d: 'Mạng máy tính & ATTT' },
-            { u: 'GV006', p: defaultHash, n: 'TS. Vũ Hải Đăng', r: 'giangvien', e: 'dangvh@qnu.edu.vn', m: 'GV006', d: 'Khoa học dữ liệu' },
-            { u: 'GV007', p: defaultHash, n: 'TS. Đặng Hoài Phương', r: 'giangvien', e: 'phuongdh@qnu.edu.vn', m: 'GV007', d: 'Kỹ thuật phần mềm' },
-            { u: 'GV008', p: defaultHash, n: 'ThS. Hoàng Văn Em', r: 'giangvien', e: 'emhv@qnu.edu.vn', m: 'GV008', d: 'Công nghệ phần mềm' },
-            { u: 'GV009', p: defaultHash, n: 'ThS. Lê Minh Triết', r: 'giangvien', e: 'trietlm@qnu.edu.vn', m: 'GV009', d: 'Hệ thống nhúng & IoT' },
-            { u: 'GV010', p: defaultHash, n: 'TS. Đỗ Ngọc Hùng', r: 'giangvien', e: 'hungdn@qnu.edu.vn', m: 'GV010', d: 'Kỹ thuật dữ liệu' },
-            { u: 'gv01', p: defaultHash, n: 'TS. Nguyễn Thanh Bình', r: 'giangvien', e: 'binhnt@qnu.edu.vn', m: 'GV001', d: 'Công nghệ phần mềm' },
-            { u: 'gv02', p: defaultHash, n: 'ThS. Trần Thị Mai', r: 'giangvien', e: 'maitt@qnu.edu.vn', m: 'GV002', d: 'Hệ thống thông tin' },
-            { u: 'SV001', p: defaultHash, n: 'Vũ Đức Hiếu', r: 'sinhvien', e: 'hieuvd@qnu.edu.vn', m: 'SV001', d: 'Công nghệ phần mềm' },
-            { u: 'SV002', p: defaultHash, n: 'Lê Minh Châu', r: 'sinhvien', e: 'chaulm@qnu.edu.vn', m: 'SV002', d: 'Công nghệ phần mềm' },
-            { u: 'SV003', p: defaultHash, n: 'Trần Quốc Đạt', r: 'sinhvien', e: 'dattq@qnu.edu.vn', m: 'SV003', d: 'Hệ thống thông tin' }
-        ];
 
-        for (const su of seedUsers) {
-            const [exist] = await pool.query('SELECT MaTK FROM TAIKHOAN WHERE TenDangNhap = ?', [su.u]);
-            if (!exist[0]) {
-                await pool.query(
-                    'INSERT INTO TAIKHOAN (TenDangNhap, MatKhau, HoTen, Email, VaiTro, MaSV, Nganh) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [su.u, su.p, su.n, su.e, su.r, su.m, su.d]
-                );
-            } else {
-                // Đảm bảo admin có đúng vai trò admin
-                if (su.u === 'admin') {
-                    await pool.query("UPDATE TAIKHOAN SET VaiTro = 'admin', HoTen = ? WHERE TenDangNhap = 'admin'", [su.n]);
-                }
-            }
-        }
-        log('Tài khoản mặc định (admin, GV001 - GV010, SV001 - SV003 / 123456) sẵn sàng');
 
         router.post('/register', async (req, res) => {
             const { TenDangNhap, MatKhau, HoTen, Email, VaiTro, MaSV, Lop, Nganh } = req.body || {};

@@ -106,25 +106,7 @@ createService({
     async init(app, { pool }) {
         const router = express.Router();
 
-        // Nạp thông báo ban đầu cho các tài khoản giảng viên GV001 - GV006
-        const seedLecturerNotifs = [
-            ['user:GV001', 'user.registered', '🎉 Kích hoạt tài khoản Giảng viên thành công!', 'Xin chào TS. Nguyễn Thanh Bình (GV001). Tài khoản giảng viên hướng dẫn của Quý Thầy/Cô đã được kích hoạt trên Cổng quản trị đào tạo QNU.'],
-            ['user:GV001', 'topic.created', '📌 Phân công hướng dẫn đề tài tốt nghiệp', 'Quý Thầy/Cô đã được phân công phụ trách đề tài [DT001] "Xây dựng hệ thống quản lý đào tạo theo kiến trúc SOA" và [DT002] "Ứng dụng AI điểm danh sinh viên".'],
-            ['user:GV001', 'registration.created', '📝 Sinh viên đăng ký đề tài tốt nghiệp', 'Sinh viên Vũ Đức Hiếu (SV001) đã đăng ký đề tài [DT001]. Vui lòng truy cập mục "Duyệt sinh viên đăng ký" để xem xét.'],
-            ['user:GV002', 'user.registered', '🎉 Kích hoạt tài khoản Giảng viên thành công!', 'Xin chào ThS. Trần Thị Mai (GV002). Tài khoản giảng viên hướng dẫn của Quý Thầy/Cô đã được kích hoạt trên Cổng quản trị đào tạo QNU.'],
-            ['user:GV002', 'topic.created', '📌 Phân công hướng dẫn đề tài tốt nghiệp', 'Quý Thầy/Cô đã được phân công phụ trách đề tài [DT003] "Hệ thống hỗ trợ ra quyết định dữ liệu sinh viên" và [DT004] "Xây dựng cổng thanh toán trực tuyến".'],
-            ['user:GV003', 'user.registered', '🎉 Kích hoạt tài khoản Giảng viên thành công!', 'Xin chào TS. Vũ Thị Phương (GV003). Tài khoản giảng viên hướng dẫn của Quý Thầy/Cô đã được kích hoạt trên Cổng quản trị đào tạo QNU (Bộ môn Trí tuệ nhân tạo).'],
-            ['user:GV004', 'user.registered', '🎉 Kích hoạt tài khoản Giảng viên thành công!', 'Xin chào PGS.TS. Lê Văn Hoàng (GV004). Tài khoản giảng viên hướng dẫn của Quý Thầy/Cô đã được kích hoạt trên Cổng quản trị đào tạo QNU.'],
-            ['user:GV005', 'user.registered', '🎉 Kích hoạt tài khoản Giảng viên thành công!', 'Xin chào ThS. Phạm Quốc Tuấn (GV005). Tài khoản giảng viên hướng dẫn của Quý Thầy/Cô đã được kích hoạt trên Cổng quản trị đào tạo QNU.'],
-            ['user:GV006', 'user.registered', '🎉 Kích hoạt tài khoản Giảng viên thành công!', 'Xin chào TS. Vũ Hải Đăng (GV006). Tài khoản giảng viên hướng dẫn của Quý Thầy/Cô đã được kích hoạt trên Cổng quản trị đào tạo QNU.']
-        ];
-        for (let i = 0; i < seedLecturerNotifs.length; i++) {
-            const [aud, topic, title, msg] = seedLecturerNotifs[i];
-            await pool.query(
-                'INSERT IGNORE INTO notifications (event_id, topic, audience, title, message) VALUES (?, ?, ?, ?, ?)',
-                [`seed-lecturer-${i + 1}`, topic, aud, title, msg]
-            );
-        }
+
 
         function audiencesOf(user) {
             if (!user) throw new HttpError(401, 'Chưa đăng nhập');

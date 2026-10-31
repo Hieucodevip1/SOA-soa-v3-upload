@@ -506,11 +506,11 @@ async function loadDashboardView() {
         const sRes = await api('GET', `/students/${user.MaSV || user.TenDangNhap}`);
         const rRes = await api('GET', '/registrations');
 
-        let gpaVal = '3.45';
+        let majorVal = 'Công nghệ phần mềm';
         let creditsVal = '122 / 135';
         if (sRes && sRes.ok && sRes.data) {
             const s = sRes.data;
-            gpaVal = s.GPA ? Number(s.GPA).toFixed(2) : '3.45';
+            majorVal = s.Nganh || 'Công nghệ phần mềm';
             creditsVal = `${s.SoTCTichLuy || 122} / 135`;
         }
 
@@ -556,8 +556,8 @@ async function loadDashboardView() {
                 <div class="metric-card">
                     
                     <div>
-                        <div class="metric-card-value">${gpaVal}</div>
-                        <div class="metric-card-label">Điểm GPA tích lũy</div>
+                        <div class="metric-card-value">${esc(majorVal)}</div>
+                        <div class="metric-card-label">Chuyên ngành đào tạo</div>
                     </div>
                 </div>
                 <div class="metric-card">
@@ -936,7 +936,7 @@ function renderCurriculumTable() {
             <td class="text-center">0</td>
             <td class="text-center">10</td>
             <td class="text-center">1</td>
-            <td><strong style="color:#c31e24;">Kiến trúc phần mềm, Lập trình Web (GPA >= 2.50)</strong></td>
+            <td><strong style="color:#004882;">Không yêu cầu</strong></td>
             <td>-</td>
         </tr>
     `;
@@ -981,7 +981,7 @@ async function loadAvailableTopics() {
     const tbody = document.getElementById('availableTopicsTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = `<tr><td colspan="11" class="text-center">Đang tải danh sách đề tài mở đăng ký...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center">Đang tải danh sách đề tài mở đăng ký...</td></tr>`;
 
     const user = getUser();
     const majorFilter = document.getElementById('topicMajorFilter')?.value || '';
@@ -1002,7 +1002,7 @@ async function loadAvailableTopics() {
     ]);
 
     if (!tRes || !tRes.ok || !Array.isArray(tRes.data)) {
-        tbody.innerHTML = `<tr><td colspan="11" class="text-center" style="color:#c62828;">Không thể tải danh sách đề tài (topic-service tạm thời không phản hồi).</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center" style="color:#c62828;">Không thể tải danh sách đề tài (topic-service tạm thời không phản hồi).</td></tr>`;
         return;
     }
 
@@ -1013,7 +1013,7 @@ async function loadAvailableTopics() {
     if (topicCountBadge) topicCountBadge.textContent = `${availableTopicsCache.length} đề tài`;
 
     if (availableTopicsCache.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="text-center">Không có đề tài / lớp học phần nào mở đăng ký trong chuyên ngành này.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center">Không có đề tài / lớp học phần nào mở đăng ký trong chuyên ngành này.</td></tr>`;
         return;
     }
 
@@ -1033,21 +1033,6 @@ async function loadAvailableTopics() {
         } else if (isFull) {
             canRegister = false;
             reason = 'Đã hết chỉ tiêu (đủ số lượng)';
-        } else if (isStudent && currentStudentInfo) {
-            const svGpa = Number(currentStudentInfo.GPA || 0);
-            const minGpa = Number(t.DiemGPAToiThieu || 2.50);
-            if (svGpa < minGpa) {
-                canRegister = false;
-                reason = `GPA (${svGpa.toFixed(2)}) < ${minGpa.toFixed(2)}`;
-            } else if (t.MonBatBuoc) {
-                const reqList = t.MonBatBuoc.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-                const passed = (currentStudentInfo.MonDaHoc || '').toLowerCase();
-                const missing = reqList.filter((m) => !passed.includes(m));
-                if (missing.length > 0) {
-                    canRegister = false;
-                    reason = `Thiếu môn: ${missing.join(', ')}`;
-                }
-            }
         }
 
         const conditionBadge = isStudent
@@ -1060,7 +1045,7 @@ async function loadAvailableTopics() {
             ? `<button class="btn-table-action btn-register" ${!canRegister ? 'disabled' : ''} onclick="event.stopPropagation(); registerTopic('${esc(t.MaDT)}')">
                 Đăng ký
                </button>`
-            : `<button class="btn-table-action btn-register" style="background:#0e4b85;" ${isFull || t.TrangThaiMo === 0 ? 'disabled' : ''} onclick="event.stopPropagation(); openRegisterForStudentModal('${esc(t.MaDT)}', '${esc(t.TenDT)}', '${esc(t.MonBatBuoc || '')}', ${t.DiemGPAToiThieu || 2.50}, ${maxCapacity})">
+            : `<button class="btn-table-action btn-register" style="background:#0e4b85;" ${isFull || t.TrangThaiMo === 0 ? 'disabled' : ''} onclick="event.stopPropagation(); openRegisterForStudentModal('${esc(t.MaDT)}', '${esc(t.TenDT)}', ${maxCapacity})">
                 Đăng ký cho SV
                </button>`;
 
@@ -1081,8 +1066,6 @@ async function loadAvailableTopics() {
                 </td>
                 <td><span class="badge-status dang-thuc-hien">${esc(t.Nganh)}</span></td>
                 <td class="text-center font-bold">${t.SoTinChi || 10}</td>
-                <td><strong style="color:#004882;">${esc(t.MonBatBuoc || 'Không yêu cầu')}</strong></td>
-                <td class="text-center font-bold" style="color:#c31e24;">${Number(t.DiemGPAToiThieu || 2.50).toFixed(2)}</td>
                 <td class="text-center font-bold" style="color:${isFull ? '#c31e24' : '#28a745'};">
                     ${registeredCount} / ${maxCapacity}
                 </td>
@@ -1101,7 +1084,7 @@ async function loadAvailableTopics() {
 async function registerTopic(MaDT) {
     showConfirmModal({
         title: 'Đăng Ký Đề Tài Tốt Nghiệp',
-        message: `Xác nhận đăng ký đề tài <strong>${esc(MaDT)}</strong>? Đăng ký của bạn sẽ ở trạng thái <em>"Chờ duyệt"</em> và chuyển đến giảng viên hướng dẫn xét duyệt điều kiện GPA và môn tiên quyết.`,
+        message: `Xác nhận đăng ký đề tài <strong>${esc(MaDT)}</strong>? Đăng ký của bạn sẽ ở trạng thái <em>"Chờ duyệt"</em> và chuyển đến giảng viên hướng dẫn xét duyệt.`,
         iconHtml: '',
         iconClass: 'primary',
         confirmText: 'Xác nhận đăng ký',
@@ -1123,7 +1106,7 @@ async function registerTopic(MaDT) {
 }
 
 // ADMIN & GIẢNG VIÊN ĐĂNG KÝ ĐỀ TÀI CHO SINH VIÊN
-function openRegisterForStudentModal(MaDT, TenDT, MonBatBuoc, minGpa, maxLimit) {
+function openRegisterForStudentModal(MaDT, TenDT, maxLimit) {
     openModal(`
         <div class="modal-header">
             <h3 class="modal-title">Đăng Ký Đề Tài Cho Sinh Viên</h3>
@@ -1135,14 +1118,12 @@ function openRegisterForStudentModal(MaDT, TenDT, MonBatBuoc, minGpa, maxLimit) 
                 <div style="font-size: 14.5px; font-weight: 800; color: #004882;">[${esc(MaDT)}] ${esc(TenDT)}</div>
                 <div style="font-size: 12.5px; color: #475569; margin-top: 6px; display: flex; gap: 16px; flex-wrap: wrap;">
                     <span>Giới hạn: <strong>${maxLimit || 5} sinh viên</strong></span>
-                    <span>GPA tối thiểu: <strong>${minGpa ? Number(minGpa).toFixed(2) : '2.50'}</strong></span>
-                    <span>Môn tiên quyết: <strong>${esc(MonBatBuoc || 'Không yêu cầu')}</strong></span>
                 </div>
             </div>
 
             <div class="form-row">
                 <label class="form-label">Nhập hoặc chọn Mã sinh viên cần đăng ký *</label>
-                <input type="text" id="regForStudentMaSV" class="form-control" list="studentCodesList" placeholder="Nhập mã SV (VD: SV001, SV002, SV003, SV004, SV005...)" required oninput="checkEligibilityLive('${esc(MaDT)}', ${minGpa || 2.50}, '${esc(MonBatBuoc || '')}')">
+                <input type="text" id="regForStudentMaSV" class="form-control" list="studentCodesList" placeholder="Nhập mã SV (VD: SV001, SV002, SV003, SV004, SV005...)" required oninput="checkEligibilityLive('${esc(MaDT)}')">
                 <datalist id="studentCodesList">
                     <option value="SV001">SV001 - Vũ Đức Hiếu (CNPM)</option>
                     <option value="SV002">SV002 - Lê Minh Châu (CNPM)</option>
@@ -1163,15 +1144,15 @@ function openRegisterForStudentModal(MaDT, TenDT, MonBatBuoc, minGpa, maxLimit) 
     `);
 }
 
-function selectStudentForReg(code, MaDT, minGpa, MonBatBuoc) {
+function selectStudentForReg(code, MaDT) {
     const input = document.getElementById('regForStudentMaSV');
     if (input) {
         input.value = code;
-        checkEligibilityLive(MaDT, minGpa, MonBatBuoc);
+        checkEligibilityLive(MaDT);
     }
 }
 
-async function checkEligibilityLive(MaDT, minGpa, MonBatBuoc) {
+async function checkEligibilityLive(MaDT) {
     const input = document.getElementById('regForStudentMaSV');
     const box = document.getElementById('regStudentEligibilityBox');
     if (!input || !box) return;
@@ -1196,32 +1177,14 @@ async function checkEligibilityLive(MaDT, minGpa, MonBatBuoc) {
     }
 
     const s = res.data;
-    const svGpa = Number(s.GPA || 0);
-    const minGpaNum = Number(minGpa || 0);
-    const gpaPass = svGpa >= minGpaNum;
-
-    let prereqPass = true;
-    let missing = [];
-    if (MonBatBuoc && MonBatBuoc.trim()) {
-        const required = MonBatBuoc.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
-        const passed = (s.MonDaHoc || '').toLowerCase();
-        missing = required.filter((req) => !passed.includes(req));
-        if (missing.length > 0) prereqPass = false;
-    }
-
-    const allPass = gpaPass && prereqPass;
 
     box.innerHTML = `
-        <div style="background: ${allPass ? '#f0fdf4' : '#fffbeb'}; border: 1px solid ${allPass ? '#86efac' : '#fde68a'}; border-radius: 6px; padding: 12px 14px;">
-            <div style="font-weight: 700; color: #1e293b; font-size: 13.5px; margin-bottom: 6px;">
+        <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 12px 14px;">
+            <div style="font-weight: 700; color: #1e293b; font-size: 13.5px; margin-bottom: 4px;">
                 ${esc(s.HoTen)} &bull; Mã SV: <strong>${esc(s.MaSV)}</strong> &bull; Lớp: <strong>${esc(s.Lop || 'DHKTPM20')}</strong> &bull; Ngành: <strong>${esc(s.Nganh || 'Công nghệ phần mềm')}</strong>
             </div>
-            <div style="font-size: 12.5px; line-height: 1.6; color: #374151;">
-                <div>Điểm GPA tích lũy: <strong>${svGpa.toFixed(2)}</strong> / 4.00 &rarr; ${gpaPass ? '<span style="color:#16a34a; font-weight:700;">Đạt chuẩn (>= ' + minGpaNum.toFixed(2) + ')</span>' : '<span style="color:#dc2626; font-weight:700;">Chưa đạt chuẩn (< ' + minGpaNum.toFixed(2) + ')</span>'}</div>
-                <div>Môn bắt buộc khóa trước: ${prereqPass ? '<span style="color:#16a34a; font-weight:700;">Đã hoàn thành đầy đủ</span>' : '<span style="color:#dc2626; font-weight:700;">Chưa hoàn thành: ' + esc(missing.join(', ')) + '</span>'}</div>
-            </div>
-            <div style="margin-top: 8px; font-weight: 700; font-size: 12.5px; color: ${allPass ? '#15803d' : '#b45309'};">
-                ${allPass ? 'Sinh viên này hoàn toàn đủ điều kiện để đăng ký lớp học phần này!' : 'Sinh viên chưa đạt đủ điều kiện. Bạn có thể xem xét đăng ký nếu được chấp thuận đặc biệt.'}
+            <div style="font-size: 12.5px; color: #15803d; font-weight: 600;">
+                Sinh viên hợp lệ để đăng ký học phần này.
             </div>
         </div>
     `;
@@ -1432,7 +1395,7 @@ function handleTopicRowClick(MaDT) {
 
         const actionBtn = isStudent
             ? `<button class="btn-primary-action" style="background:#004882;" onclick="registerTopic('${esc(topic.MaDT)}')">Đăng ký đề tài này</button>`
-            : `<button class="btn-primary-action" style="background:#0e4b85;" onclick="openRegisterForStudentModal('${esc(topic.MaDT)}', '${esc(topic.TenDT)}', '${esc(topic.MonBatBuoc || '')}', ${topic.DiemGPAToiThieu || 2.50}, ${maxCapacity})">Đăng ký cho SV đề tài này</button>`;
+            : `<button class="btn-primary-action" style="background:#0e4b85;" onclick="openRegisterForStudentModal('${esc(topic.MaDT)}', '${esc(topic.TenDT)}', ${maxCapacity})">Đăng ký cho SV đề tài này</button>`;
 
         detailContainer.style.display = 'block';
         detailContainer.innerHTML = `
@@ -1457,14 +1420,6 @@ function handleTopicRowClick(MaDT) {
                         <div class="reg-detail-item">
                             <span class="lbl">Số tín chỉ học phần</span>
                             <span class="val"><strong>${topic.SoTinChi || 10}</strong> tín chỉ</span>
-                        </div>
-                        <div class="reg-detail-item">
-                            <span class="lbl">Môn bắt buộc khóa trước (Prerequisites)</span>
-                            <span class="val"><strong style="color:#004882;">${esc(topic.MonBatBuoc || 'Không yêu cầu')}</strong></span>
-                        </div>
-                        <div class="reg-detail-item">
-                            <span class="lbl">Điểm GPA tối thiểu</span>
-                            <span class="val"><strong style="color:#c31e24;">${Number(topic.DiemGPAToiThieu || 2.50).toFixed(2)}</strong> / 4.00</span>
                         </div>
                         <div class="reg-detail-item">
                             <span class="lbl">Chỉ tiêu sinh viên</span>
@@ -1515,7 +1470,7 @@ function handleRegistrationRowClick(regId, MaSV, MaDT) {
                         <div>
                             <strong>${esc(r.HoTen || 'Sinh viên')}</strong> (Mã SV: <strong style="color:#004882;">${esc(r.MaSV)}</strong>)
                             <div class="reg-detail-meta">
-                                Lớp: <strong>${esc(r.Lop || 'DHKTPM20')}</strong> &bull; Chuyên ngành: <strong>${esc(r.NganhSV || 'Công nghệ phần mềm')}</strong> &bull; GPA: <strong>${r.GPA ? Number(r.GPA).toFixed(2) : '3.00'}</strong>
+                                Lớp: <strong>${esc(r.Lop || 'DHKTPM20')}</strong> &bull; Chuyên ngành: <strong>${esc(r.NganhSV || 'Công nghệ phần mềm')}</strong>
                             </div>
                         </div>
                     </div>
@@ -1721,7 +1676,7 @@ async function openEditRegistrationModal(regId) {
             <!-- 5. Lý do từ chối (hiển thị khi trạng thái là Từ chối) -->
             <div class="form-row" id="editRegRejectBox" style="${reg.TrangThai === 'Tu choi' ? 'display:block;' : 'display:none;'}">
                 <label class="form-label" style="color:#c53030;">Lý do từ chối đăng ký:</label>
-                <input type="text" id="editRegLyDoTuChoi" class="form-control" value="${esc(reg.LyDoTuChoi || '')}" placeholder="VD: Chưa đạt môn tiên quyết, không đủ chỉ tiêu GPA...">
+                <input type="text" id="editRegLyDoTuChoi" class="form-control" value="${esc(reg.LyDoTuChoi || '')}" placeholder="VD: Lớp học phần đã đủ số lượng, đề tài tạm đóng...">
             </div>
 
             <div class="modal-footer">
@@ -1890,15 +1845,9 @@ async function loadGradesView() {
                                     Lớp: <strong>${esc(s.Lop || 'DHKTPM20')}</strong> &bull; Chuyên ngành: <strong>${esc(s.Nganh || 'Công nghệ phần mềm')}</strong> &bull; Email: <strong>${esc(s.Email || '-')}</strong>
                                 </div>
                             </div>
-                            <div style="display:flex; gap:18px; text-align:right;">
-                                <div>
-                                    <div style="font-size:18px; font-weight:800; color:#004882;">${s.GPA ? Number(s.GPA).toFixed(2) : '3.00'} / 4.00</div>
-                                    <div style="font-size:11.5px; color:#666;">Điểm GPA tích lũy</div>
-                                </div>
-                                <div>
-                                    <div style="font-size:18px; font-weight:800; color:#2e7d32;">${s.SoTCTichLuy || 110}</div>
-                                    <div style="font-size:11.5px; color:#666;">Tín chỉ tích lũy</div>
-                                </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:18px; font-weight:800; color:#2e7d32;">${s.SoTCTichLuy || 110}</div>
+                                <div style="font-size:11.5px; color:#666;">Tín chỉ tích lũy</div>
                             </div>
                         </div>
                     </div>
@@ -2061,15 +2010,11 @@ async function loadProfileView() {
         if (sRes && sRes.ok && sRes.data) {
             const s = sRes.data;
             document.getElementById('profClass').textContent = s.Lop || 'DHKTPM20';
-            document.getElementById('profGPA').textContent = s.GPA ? Number(s.GPA).toFixed(2) : '3.45';
             document.getElementById('profCredits').textContent = `${s.SoTCTichLuy || 122} tín chỉ`;
-            document.getElementById('profPassedCourses').textContent = s.MonDaHoc || 'Giải tích, Đại số tuyến tính, Lập trình căn bản, Cơ sở dữ liệu, Kiến trúc máy tính, Kỹ thuật phần mềm';
         }
     } else {
         document.getElementById('profClass').textContent = 'Khoa Công Nghệ Thông Tin';
-        document.getElementById('profGPA').textContent = '—';
         document.getElementById('profCredits').textContent = '—';
-        document.getElementById('profPassedCourses').textContent = 'Giảng viên phụ trách chuyên môn';
     }
 }
 
@@ -2146,9 +2091,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV001',
         Nganh: 'Công nghệ phần mềm',
         SoTinChi: 10,
-        MonBatBuoc: 'Cơ sở dữ liệu, Kiến trúc phần mềm',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.50
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT002',
@@ -2158,9 +2101,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV001',
         Nganh: 'Công nghệ phần mềm',
         SoTinChi: 10,
-        MonBatBuoc: 'Cơ sở dữ liệu, Kỹ thuật phần mềm',
-        GioiHanSV: 4,
-        DiemGPAToiThieu: 2.80
+        GioiHanSV: 4
     },
     {
         MaDT: 'DT003',
@@ -2170,9 +2111,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV008',
         Nganh: 'Công nghệ phần mềm',
         SoTinChi: 10,
-        MonBatBuoc: 'Lập trình thiết bị di động, Cơ sở dữ liệu',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.50
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT004',
@@ -2182,9 +2121,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV009',
         Nganh: 'Công nghệ phần mềm',
         SoTinChi: 10,
-        MonBatBuoc: 'Lập trình Web, Kiến trúc phần mềm',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.60
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT005',
@@ -2194,9 +2131,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV001',
         Nganh: 'Công nghệ phần mềm',
         SoTinChi: 10,
-        MonBatBuoc: 'Kiểm thử phần mềm, Kỹ thuật phần mềm',
-        GioiHanSV: 2,
-        DiemGPAToiThieu: 2.70
+        GioiHanSV: 2
     },
     {
         MaDT: 'DT006',
@@ -2206,9 +2141,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV002',
         Nganh: 'Hệ thống thông tin',
         SoTinChi: 10,
-        MonBatBuoc: 'Cơ sở dữ liệu, Phân tích thiết kế HTTT',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.50
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT007',
@@ -2218,9 +2151,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV002',
         Nganh: 'Hệ thống thông tin',
         SoTinChi: 10,
-        MonBatBuoc: 'Cơ sở dữ liệu, An toàn thông tin',
-        GioiHanSV: 2,
-        DiemGPAToiThieu: 2.60
+        GioiHanSV: 2
     },
     {
         MaDT: 'DT008',
@@ -2230,9 +2161,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV012',
         Nganh: 'Hệ thống thông tin',
         SoTinChi: 10,
-        MonBatBuoc: 'Phân tích thiết kế HTTT, Cơ sở dữ liệu',
-        GioiHanSV: 4,
-        DiemGPAToiThieu: 2.50
+        GioiHanSV: 4
     },
     {
         MaDT: 'DT009',
@@ -2242,9 +2171,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV002',
         Nganh: 'Hệ thống thông tin',
         SoTinChi: 10,
-        MonBatBuoc: 'Cơ sở dữ liệu, Phân tích thiết kế HTTT',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.50
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT010',
@@ -2254,9 +2181,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV003',
         Nganh: 'Trí tuệ nhân tạo',
         SoTinChi: 10,
-        MonBatBuoc: 'Học máy, Xử lý ngôn ngữ tự nhiên',
-        GioiHanSV: 2,
-        DiemGPAToiThieu: 3.00
+        GioiHanSV: 2
     },
     {
         MaDT: 'DT011',
@@ -2266,9 +2191,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV003',
         Nganh: 'Trí tuệ nhân tạo',
         SoTinChi: 10,
-        MonBatBuoc: 'Thị giác máy tính, Học máy',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.80
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT012',
@@ -2278,9 +2201,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV003',
         Nganh: 'Trí tuệ nhân tạo',
         SoTinChi: 10,
-        MonBatBuoc: 'Thị giác máy tính, Cấu trúc dữ liệu & giải thuật',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.90
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT013',
@@ -2290,9 +2211,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV004',
         Nganh: 'Khoa học máy tính',
         SoTinChi: 10,
-        MonBatBuoc: 'Cấu trúc dữ liệu & giải thuật, Trí tuệ nhân tạo',
-        GioiHanSV: 2,
-        DiemGPAToiThieu: 2.80
+        GioiHanSV: 2
     },
     {
         MaDT: 'DT014',
@@ -2302,9 +2221,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV010',
         Nganh: 'Kỹ thuật dữ liệu',
         SoTinChi: 10,
-        MonBatBuoc: 'Cơ sở dữ liệu, Khai phá dữ liệu',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.70
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT015',
@@ -2314,9 +2231,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV005',
         Nganh: 'Mạng máy tính & An toàn thông tin',
         SoTinChi: 10,
-        MonBatBuoc: 'Mạng máy tính, An toàn thông tin',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.60
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT016',
@@ -2326,9 +2241,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV005',
         Nganh: 'Mạng máy tính & An toàn thông tin',
         SoTinChi: 10,
-        MonBatBuoc: 'Mật mã học, An toàn thông tin',
-        GioiHanSV: 2,
-        DiemGPAToiThieu: 2.80
+        GioiHanSV: 2
     },
     {
         MaDT: 'DT017',
@@ -2338,9 +2251,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV004',
         Nganh: 'Khoa học máy tính',
         SoTinChi: 10,
-        MonBatBuoc: 'Hệ thống nhúng và IoT, Mạng máy tính',
-        GioiHanSV: 4,
-        DiemGPAToiThieu: 2.50
+        GioiHanSV: 4
     },
     {
         MaDT: 'DT018',
@@ -2350,9 +2261,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV011',
         Nganh: 'Sư phạm Tin học',
         SoTinChi: 10,
-        MonBatBuoc: 'Lập trình đồ họa, Phương pháp dạy học Tin học',
-        GioiHanSV: 3,
-        DiemGPAToiThieu: 2.50
+        GioiHanSV: 3
     },
     {
         MaDT: 'DT019',
@@ -2362,9 +2271,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV011',
         Nganh: 'Toán ứng dụng',
         SoTinChi: 10,
-        MonBatBuoc: 'Xác suất thống kê, Đại số tuyến tính',
-        GioiHanSV: 2,
-        DiemGPAToiThieu: 2.70
+        GioiHanSV: 2
     },
     {
         MaDT: 'DT020',
@@ -2374,9 +2281,7 @@ const PRESET_TOPICS = [
         MaGV: 'GV008',
         Nganh: 'Công nghệ phần mềm',
         SoTinChi: 10,
-        MonBatBuoc: 'Lập trình Web, Thiết kế giao diện UI/UX',
-        GioiHanSV: 4,
-        DiemGPAToiThieu: 2.50
+        GioiHanSV: 4
     }
 ];
 
@@ -2614,32 +2519,6 @@ function viewSelectedLecturerProfile() {
     }
 }
 
-// Danh sách toàn bộ các môn học tiên quyết (Prerequisites)
-const ALL_PREREQUISITES = [
-    'Cơ sở dữ liệu',
-    'Kiến trúc phần mềm',
-    'Lập trình Web',
-    'Kỹ thuật phần mềm',
-    'Cấu trúc dữ liệu & giải thuật',
-    'Phân tích thiết kế HTTT',
-    'Học máy',
-    'Trí tuệ nhân tạo',
-    'Thị giác máy tính',
-    'Xử lý ngôn ngữ tự nhiên',
-    'Mạng máy tính',
-    'An toàn thông tin',
-    'Mật mã học',
-    'Hệ thống nhúng và IoT',
-    'Khai phá dữ liệu',
-    'Kiểm thử phần mềm',
-    'Lập trình thiết bị di động',
-    'Xác suất thống kê',
-    'Đại số tuyến tính',
-    'Lập trình đồ họa',
-    'Phương pháp dạy học Tin học',
-    'Thiết kế giao diện UI/UX'
-];
-
 // Tự động điền thông tin đề tài khi chọn mã hoặc preset
 function applyTopicPreset(maDT) {
     if (!maDT) return;
@@ -2651,17 +2530,13 @@ function applyTopicPreset(maDT) {
     const elMoTa = document.getElementById('mMoTa');
     const elNganh = document.getElementById('mNganh');
     const elGiangVienSelect = document.getElementById('mGiangVienSelect');
-    const elMonBatBuoc = document.getElementById('mMonBatBuoc');
     const elGioiHanSV = document.getElementById('mGioiHanSV');
-    const elDiemGPA = document.getElementById('mDiemGPAToiThieu');
 
     if (elMaDT && (!elMaDT.readOnly)) elMaDT.value = preset.MaDT;
     if (elTenDT) elTenDT.value = preset.TenDT;
     if (elMoTa) elMoTa.value = preset.MoTa;
     if (elNganh) elNganh.value = preset.Nganh;
-    if (elMonBatBuoc) elMonBatBuoc.value = preset.MonBatBuoc;
     if (elGioiHanSV) elGioiHanSV.value = preset.GioiHanSV;
-    if (elDiemGPA) elDiemGPA.value = preset.DiemGPAToiThieu;
 
     if (elGiangVienSelect) {
         const found = LECTURERS_DATA.find((l) => l.name === preset.GiangVienHuongDan || (preset.MaGV && l.code === preset.MaGV));
@@ -2679,23 +2554,6 @@ function applyTopicByTitle(title) {
     const preset = PRESET_TOPICS.find((t) => t.TenDT.trim().toLowerCase() === cleanTitle || cleanTitle.includes(t.TenDT.trim().toLowerCase()));
     if (preset) {
         applyTopicPreset(preset.MaDT);
-    }
-}
-
-// Bấm để thêm môn bắt buộc khóa trước vào ô nhập
-function addPrereqCourse(courseName) {
-    if (!courseName) return;
-    const input = document.getElementById('mMonBatBuoc');
-    if (!input) return;
-    const current = input.value.trim();
-    if (!current) {
-        input.value = courseName;
-    } else {
-        const parts = current.split(',').map((p) => p.trim());
-        if (!parts.includes(courseName)) {
-            parts.push(courseName);
-            input.value = parts.join(', ');
-        }
     }
 }
 
@@ -2751,10 +2609,6 @@ async function executeStudentLookup(overrideCode = null) {
     const allRegs = (rRes && rRes.ok && Array.isArray(rRes.data)) ? rRes.data : [];
     const studentRegs = allRegs.filter((r) => r.MaSV === maSV);
 
-    const monList = s.MonDaHoc
-        ? s.MonDaHoc.split(',').map((m) => m.trim()).filter(Boolean)
-        : [];
-
     let regsTableHtml = '';
     if (studentRegs.length === 0) {
         regsTableHtml = `<tr><td colspan="8" class="text-center" style="padding: 16px; color: #718096;">Sinh viên chưa đăng ký đề tài hoặc lớp học phần nào trong học kỳ này.</td></tr>`;
@@ -2806,8 +2660,8 @@ async function executeStudentLookup(overrideCode = null) {
                 <div class="metric-card" style="box-shadow: none; border: 1px solid #e2e8f0;">
                     
                     <div>
-                        <div class="metric-card-value" style="color: #004882;">${s.GPA ? Number(s.GPA).toFixed(2) : '3.00'} / 4.00</div>
-                        <div class="metric-card-label">Điểm GPA tích lũy</div>
+                        <div class="metric-card-value" style="color: #004882;">${esc(s.Nganh || 'Công nghệ phần mềm')}</div>
+                        <div class="metric-card-label">Chuyên ngành đào tạo</div>
                     </div>
                 </div>
                 <div class="metric-card" style="box-shadow: none; border: 1px solid #e2e8f0;">
@@ -2830,16 +2684,6 @@ async function executeStudentLookup(overrideCode = null) {
                         <div class="metric-card-value" style="font-size: 16px;">Trường ĐH Quy Nhơn</div>
                         <div class="metric-card-label">Cổng thông tin đào tạo</div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Môn tiên quyết đã học -->
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; margin-bottom: 22px;">
-                <div style="font-size: 13.5px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">
-                    CÁC MÔN BẮT BUỘC KHÓA TRƯỚC ĐÃ ĐẠT (PREREQUISITES PASSED):
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                    ${monList.length > 0 ? monList.map((m) => `<span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 4px; font-size: 12.5px; font-weight: 600;">${esc(m)}</span>`).join('') : '<span style="color: #94a3b8; font-size: 13px;">Chưa có dữ liệu môn học khóa trước</span>'}
                 </div>
             </div>
 
@@ -2883,7 +2727,7 @@ function resetStudentLookup() {
                 </div>
                 <div style="max-width: 520px; margin: 0 auto; line-height: 1.5; color: #64748b;">
                     Theo quy định bảo mật học vụ, thông tin sinh viên không hiển thị sẵn trên trang học vụ.
-                    Vui lòng nhập mã sinh viên vào ô tìm kiếm ở trên để tra cứu chi tiết hồ sơ (GPA, tín chỉ, môn tiên quyết, đề tài đăng ký và kết quả học tập).
+                    Vui lòng nhập mã sinh viên vào ô tìm kiếm ở trên để tra cứu chi tiết hồ sơ (tín chỉ, lớp, ngành, đề tài đăng ký và kết quả học tập).
                 </div>
             </div>
         `;
@@ -2942,7 +2786,7 @@ async function loadTeacherTopics() {
     availableTopicsCache = topics;
 
     if (topics.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center">Bạn chưa tạo đề tài / lớp học phần nào. Bấm nút "+ Tạo lớp học phần / đề tài mới" để bắt đầu.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center">Bạn chưa tạo đề tài / lớp học phần nào. Bấm nút "+ Tạo lớp học phần / đề tài mới" để bắt đầu.</td></tr>`;
         return;
     }
 
@@ -2969,9 +2813,7 @@ async function loadTeacherTopics() {
             </td>
             <td><span class="badge-status dang-thuc-hien">${esc(t.Nganh)}</span></td>
             <td class="text-center font-bold">${t.SoTinChi || 10}</td>
-            <td><strong style="color:#004882;">${esc(t.MonBatBuoc || 'Không yêu cầu')}</strong></td>
             <td class="text-center font-bold">${t.GioiHanSV || 5} SV</td>
-            <td class="text-center font-bold" style="color:#c31e24;">${Number(t.DiemGPAToiThieu || 2.50).toFixed(2)}</td>
             <td class="text-center">
                 <span class="badge-status ${t.TrangThaiMo ? 'da-duyet' : 'tu-choi'}">
                     ${t.TrangThaiMo ? 'Đang mở' : 'Đã khóa'}
@@ -3034,31 +2876,14 @@ function openTopicModal(topic = null) {
                 </select>
             </div>
 
-            <!-- Giới hạn SV & GPA tối thiểu -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div class="form-row">
-                    <label class="form-label">Số lượng giới hạn SV đăng ký *</label>
-                    <input type="number" id="mGioiHanSV" class="form-control" min="1" max="50" value="${topic ? topic.GioiHanSV : 5}" required>
-                    <div class="form-help-text">Tối đa bao nhiêu SV được nhận</div>
-                </div>
-                <div class="form-row">
-                    <label class="form-label">Tối thiểu điểm GPA để học *</label>
-                    <input type="number" id="mDiemGPAToiThieu" class="form-control" min="0" max="4" step="0.01" value="${topic ? topic.DiemGPAToiThieu : 2.50}" required>
-                    <div class="form-help-text">Thang điểm 4.0 (VD: 2.50)</div>
-                </div>
-            </div>
-
-            <!-- 5. Môn bắt buộc khóa trước (Prerequisites) -->
+            <!-- Giới hạn SV -->
             <div class="form-row">
-                <label class="form-label">Môn bắt buộc khóa trước (Prerequisites)</label>
-                <input type="text" id="mMonBatBuoc" class="form-control" list="listPresetPrereqs" value="${esc(topic ? topic.MonBatBuoc : 'Cơ sở dữ liệu, Kiến trúc phần mềm')}" placeholder="Phân tách bằng dấu phẩy...">
-                <datalist id="listPresetPrereqs">
-                    ${ALL_PREREQUISITES.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
-                </datalist>
-                <div class="form-help-text">Sinh viên phải hoàn thành các môn này trước khi được duyệt đăng ký</div>
+                <label class="form-label">Số lượng giới hạn SV đăng ký *</label>
+                <input type="number" id="mGioiHanSV" class="form-control" min="1" max="50" value="${topic ? topic.GioiHanSV : 5}" required>
+                <div class="form-help-text">Tối đa bao nhiêu SV được nhận</div>
             </div>
 
-            <!-- 6. Giảng viên hướng dẫn -->
+            <!-- 5. Giảng viên hướng dẫn -->
             <div class="form-row">
                 <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
                     <span>Giảng viên hướng dẫn * ${user.VaiTro === 'giangvien' ? '(Cố định theo tài khoản của bạn)' : ''}</span>
@@ -3108,8 +2933,6 @@ async function saveTopic(event, isEdit) {
         MoTa: document.getElementById('mMoTa').value.trim(),
         Nganh: document.getElementById('mNganh').value,
         GioiHanSV: Number(document.getElementById('mGioiHanSV').value),
-        DiemGPAToiThieu: Number(document.getElementById('mDiemGPAToiThieu').value),
-        MonBatBuoc: document.getElementById('mMonBatBuoc').value.trim(),
         GiangVienHuongDan: gvName,
         MaGV: gvCode,
         SoTinChi: 10
@@ -3166,13 +2989,13 @@ async function loadTeacherApprovals() {
     const res = await api('GET', '/registrations');
 
     if (!res || !res.ok) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center" style="color:#c62828;">Không thể tải đăng ký (registration-service tạm dừng).</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center" style="color:#c62828;">Không thể tải đăng ký (registration-service tạm dừng).</td></tr>`;
         return;
     }
 
     const regs = res.data || [];
     if (regs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center" style="padding:20px; color:#777;">Hiện tại không có sinh viên nào đăng ký đề tài.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center" style="padding:20px; color:#777;">Hiện tại không có sinh viên nào đăng ký đề tài.</td></tr>`;
         return;
     }
 
@@ -3182,7 +3005,6 @@ async function loadTeacherApprovals() {
             <td class="text-center"><code>${esc(r.MaSV)}</code></td>
             <td><strong>${esc(r.HoTen)}</strong></td>
             <td>${esc(r.Lop || 'DHKTPM20')}</td>
-            <td class="text-center font-bold" style="color:#004882;">${r.GPA ? Number(r.GPA).toFixed(2) : '3.45'}</td>
             <td class="text-center"><code>${esc(r.MaDT)}</code></td>
             <td><strong>${esc(r.TenDT)}</strong></td>
             <td class="text-center">${esc(formatDateVN(r.NgayDangKy))}</td>
@@ -3227,7 +3049,7 @@ async function rejectRegistrationPrompt(MaDK) {
     showPromptModal({
         title: 'Từ Chối Đăng Ký Đề Tài',
         message: 'Vui lòng nhập lý do từ chối để phản hồi giải thích đến sinh viên:',
-        defaultValue: 'Chưa đạt yêu cầu môn tiên quyết hoặc điểm GPA theo quy định của lớp học phần.',
+        defaultValue: 'Chưa đạt yêu cầu theo quy định của lớp học phần.',
         placeholder: 'Nhập lý do từ chối...',
         confirmText: 'Xác nhận từ chối',
         confirmClass: 'danger',
@@ -3479,11 +3301,11 @@ async function loadAdminStudents() {
     const tbody = document.getElementById('adminStudentsTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center">Đang tải danh sách sinh viên...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center">Đang tải danh sách sinh viên...</td></tr>`;
     const res = await api('GET', '/students');
 
     if (!res || !res.ok) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center" style="color:#c62828;">Không thể tải sinh viên (student-service không phản hồi).</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="color:#c62828;">Không thể tải sinh viên (student-service không phản hồi).</td></tr>`;
         return;
     }
 
@@ -3495,9 +3317,7 @@ async function loadAdminStudents() {
             <td>${esc(s.Email || '-')}</td>
             <td>${esc(s.Lop || '-')}</td>
             <td>${esc(s.Nganh || 'Công nghệ phần mềm')}</td>
-            <td class="text-center font-bold" style="color:#004882;">${s.GPA ? Number(s.GPA).toFixed(2) : '3.00'}</td>
             <td class="text-center">${s.SoTCTichLuy || 110}</td>
-            <td style="font-size:12px; max-width:280px;">${esc(s.MonDaHoc || '-')}</td>
             <td class="text-center">
                 <button class="btn-table-action" style="background:#004882; color:#fff;" onclick="quickLookupCode('${esc(s.MaSV)}')">Tra cứu</button>
                 <button class="btn-table-action btn-register" onclick='openStudentModal(${JSON.stringify(s)})'>Sửa</button>
@@ -3543,19 +3363,9 @@ function openStudentModal(student = null) {
                     <option value="Hệ thống thông tin" ${student && student.Nganh === 'Hệ thống thông tin' ? 'selected' : ''}>Hệ thống thông tin</option>
                 </select>
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div class="form-row">
-                    <label class="form-label">Điểm GPA tích lũy</label>
-                    <input type="number" id="sGPA" class="form-control" min="0" max="4" step="0.01" value="${student ? student.GPA : 3.00}">
-                </div>
-                <div class="form-row">
-                    <label class="form-label">Số tín chỉ tích lũy</label>
-                    <input type="number" id="sTC" class="form-control" value="${student ? student.SoTCTichLuy : 110}">
-                </div>
-            </div>
             <div class="form-row">
-                <label class="form-label">Các môn học khóa trước đã đạt (phân cách bởi dấu phẩy)</label>
-                <textarea id="sMonDaHoc" class="form-control" rows="2">${esc(student ? student.MonDaHoc : 'Giải tích, Đại số tuyến tính, Lập trình căn bản, Cơ sở dữ liệu, Kiến trúc máy tính, Kỹ thuật phần mềm, Lập trình Web')}</textarea>
+                <label class="form-label">Số tín chỉ tích lũy</label>
+                <input type="number" id="sTC" class="form-control" value="${student ? student.SoTCTichLuy : 110}">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal()">Hủy</button>
@@ -3573,9 +3383,7 @@ async function saveStudent(event, isEdit) {
         Email: document.getElementById('sEmail').value.trim(),
         Lop: document.getElementById('sLop').value.trim(),
         Nganh: document.getElementById('sNganh').value,
-        GPA: Number(document.getElementById('sGPA').value),
-        SoTCTichLuy: Number(document.getElementById('sTC').value),
-        MonDaHoc: document.getElementById('sMonDaHoc').value.trim()
+        SoTCTichLuy: Number(document.getElementById('sTC').value)
     };
 
     const method = isEdit ? 'PUT' : 'POST';
@@ -3673,7 +3481,7 @@ async function loadSoaSystemView() {
             name: 'Student Service',
             port: 3002,
             type: 'Microservice Nghiệp vụ',
-            role: 'Quản lý hồ sơ sinh viên, điểm GPA tích lũy, môn bắt buộc khóa trước',
+            role: 'Quản lý hồ sơ sinh viên, thông tin lớp và chuyên ngành',
             db: 'soa_student (Độc lập)'
         },
         {
@@ -3681,7 +3489,7 @@ async function loadSoaSystemView() {
             name: 'Topic Service',
             port: 3003,
             type: 'Microservice Nghiệp vụ',
-            role: 'Quản lý Lớp học phần / Đề tài, chỉ tiêu sinh viên, điều kiện tiên quyết',
+            role: 'Quản lý Lớp học phần / Đề tài, phân công giảng viên và chỉ tiêu',
             db: 'soa_topic (Độc lập)'
         },
         {

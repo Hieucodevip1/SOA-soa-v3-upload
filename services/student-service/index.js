@@ -16,8 +16,6 @@ createService({
                 Email VARCHAR(100) NULL,
                 Lop VARCHAR(50) NULL,
                 Nganh VARCHAR(100) DEFAULT 'Công nghệ phần mềm',
-                GPA DECIMAL(3,2) DEFAULT 3.00,
-                MonDaHoc TEXT NULL,
                 SoTCTichLuy INT DEFAULT 110
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
         ]
@@ -31,15 +29,13 @@ createService({
             const [exist] = await pool.query('SELECT MaSV FROM SINHVIEN WHERE MaSV = ?', [studentCode]);
             if (!exist[0]) {
                 await pool.query(
-                    'INSERT INTO SINHVIEN (MaSV, HoTen, Email, Lop, Nganh, GPA, MonDaHoc, SoTCTichLuy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    'INSERT INTO SINHVIEN (MaSV, HoTen, Email, Lop, Nganh, SoTCTichLuy) VALUES (?, ?, ?, ?, ?, ?)',
                     [
                         studentCode,
                         HoTen || 'Sinh viên mới',
                         Email || null,
                         Lop || 'DHKTPM20',
                         Nganh || 'Công nghệ phần mềm',
-                        3.00,
-                        'Giải tích, Đại số tuyến tính, Lập trình căn bản, Cơ sở dữ liệu, Kiến trúc máy tính, Kỹ thuật phần mềm, Lập trình Web',
                         110
                     ]
                 );
@@ -53,12 +49,12 @@ createService({
         }
     },
     openapi: {
-        description: 'Dịch vụ quản lý thông tin sinh viên, GPA, môn đã học',
+        description: 'Dịch vụ quản lý thông tin sinh viên, lớp, ngành và số tín chỉ',
         routes: [
             { method: 'GET', path: '/api/students', summary: 'Danh sách sinh viên (lọc theo ?ids=SV001,SV002 hoặc ?nganh=...)', query: ['ids', 'nganh'] },
             { method: 'GET', path: '/api/students/:id', summary: 'Chi tiết sinh viên' },
-            { method: 'POST', path: '/api/students', summary: 'Thêm sinh viên', roles: ['admin', 'giangvien'], body: ['MaSV', 'HoTen', 'Email', 'Lop', 'Nganh', 'GPA', 'MonDaHoc', 'SoTCTichLuy'], required: ['MaSV', 'HoTen'] },
-            { method: 'PUT', path: '/api/students/:id', summary: 'Cập nhật sinh viên', roles: ['admin', 'giangvien'], body: ['HoTen', 'Email', 'Lop', 'Nganh', 'GPA', 'MonDaHoc', 'SoTCTichLuy'], required: ['HoTen'] },
+            { method: 'POST', path: '/api/students', summary: 'Thêm sinh viên', roles: ['admin', 'giangvien'], body: ['MaSV', 'HoTen', 'Email', 'Lop', 'Nganh', 'SoTCTichLuy'], required: ['MaSV', 'HoTen'] },
+            { method: 'PUT', path: '/api/students/:id', summary: 'Cập nhật sinh viên', roles: ['admin', 'giangvien'], body: ['HoTen', 'Email', 'Lop', 'Nganh', 'SoTCTichLuy'], required: ['HoTen'] },
             { method: 'DELETE', path: '/api/students/:id', summary: 'Xóa sinh viên (phát sự kiện student.deleted)', roles: ['admin'] }
         ]
     },
@@ -68,29 +64,17 @@ createService({
         // Đảm bảo các cột mới tồn tại
         try {
             await pool.query("ALTER TABLE SINHVIEN ADD COLUMN IF NOT EXISTS Nganh VARCHAR(100) DEFAULT 'Công nghệ phần mềm'");
-            await pool.query("ALTER TABLE SINHVIEN ADD COLUMN IF NOT EXISTS GPA DECIMAL(3,2) DEFAULT 3.00");
-            await pool.query("ALTER TABLE SINHVIEN ADD COLUMN IF NOT EXISTS MonDaHoc TEXT NULL");
             await pool.query("ALTER TABLE SINHVIEN ADD COLUMN IF NOT EXISTS SoTCTichLuy INT DEFAULT 110");
         } catch { /* Bỏ qua nếu đã tồn tại */ }
 
-        // Khởi tạo dữ liệu mẫu nếu chưa có
-        const [[{ count }]] = await pool.query('SELECT COUNT(*) AS count FROM SINHVIEN');
-        if (count === 0) {
-            const initialStudents = [
-                ['SV001', 'Vũ Đức Hiếu', 'hieuvd@qnu.edu.vn', 'DHKTPM20', 'Công nghệ phần mềm', 3.45, 'Giải tích, Đại số tuyến tính, Lập trình căn bản, Cơ sở dữ liệu, Kiến trúc máy tính, Kỹ thuật phần mềm, Lập trình Web', 122],
-                ['SV002', 'Lê Minh Châu', 'chaulm@qnu.edu.vn', 'DHKTPM20', 'Công nghệ phần mềm', 3.10, 'Giải tích, Đại số tuyến tính, Lập trình căn bản, Cơ sở dữ liệu, Kiến trúc máy tính, Kỹ thuật phần mềm', 112],
-                ['SV003', 'Trần Quốc Đạt', 'dattq@qnu.edu.vn', 'DHHTTT20', 'Hệ thống thông tin', 2.85, 'Giải tích, Đại số tuyến tính, Lập trình căn bản, Cơ sở dữ liệu, Phân tích thiết kế HTTT', 105],
-                ['SV004', 'Nguyễn Thị Bích', 'bichnt@qnu.edu.vn', 'DHKTPM21', 'Công nghệ phần mềm', 2.20, 'Giải tích, Lập trình căn bản, Cơ sở dữ liệu', 65],
-                ['SV005', 'Phạm Văn Nam', 'nampv@qnu.edu.vn', 'DHKHMT20', 'Khoa học máy tính', 3.35, 'Giải tích, Đại số tuyến tính, Cơ sở dữ liệu, Cấu trúc dữ liệu & giải thuật, Trí tuệ nhân tạo', 118]
-            ];
-            for (const s of initialStudents) {
-                await pool.query(
-                    'INSERT IGNORE INTO SINHVIEN (MaSV, HoTen, Email, Lop, Nganh, GPA, MonDaHoc, SoTCTichLuy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    s
-                );
-            }
-            log('Đã nạp 5 sinh viên mẫu (SV001 -> SV005)');
-        }
+        try {
+            await pool.query("ALTER TABLE SINHVIEN DROP COLUMN GPA");
+        } catch {}
+        try {
+            await pool.query("ALTER TABLE SINHVIEN DROP COLUMN MonDaHoc");
+        } catch {}
+
+
 
         router.get('/', async (req, res) => {
             let rows;
@@ -113,16 +97,15 @@ createService({
         });
 
         router.post('/', async (req, res) => {
-            const { MaSV, HoTen, Email, Lop, Nganh, GPA, MonDaHoc, SoTCTichLuy } = req.body || {};
+            const { MaSV, HoTen, Email, Lop, Nganh, SoTCTichLuy } = req.body || {};
             if (!MaSV || !HoTen) throw new HttpError(400, 'Mã sinh viên và họ tên là bắt buộc');
             if (Email && !EMAIL_RE.test(Email)) throw new HttpError(400, 'Email không hợp lệ');
-            const gpaVal = GPA !== undefined && GPA !== '' ? Number(GPA) : 3.00;
             const tcVal = SoTCTichLuy !== undefined && SoTCTichLuy !== '' ? Number(SoTCTichLuy) : 110;
 
             try {
                 await pool.query(
-                    'INSERT INTO SINHVIEN (MaSV, HoTen, Email, Lop, Nganh, GPA, MonDaHoc, SoTCTichLuy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    [MaSV, HoTen, Email || null, Lop || null, Nganh || 'Công nghệ phần mềm', gpaVal, MonDaHoc || null, tcVal]
+                    'INSERT INTO SINHVIEN (MaSV, HoTen, Email, Lop, Nganh, SoTCTichLuy) VALUES (?, ?, ?, ?, ?, ?)',
+                    [MaSV, HoTen, Email || null, Lop || null, Nganh || 'Công nghệ phần mềm', tcVal]
                 );
             } catch (e) {
                 if (e.code === 'ER_DUP_ENTRY') throw new HttpError(409, 'Mã sinh viên đã tồn tại');
@@ -139,16 +122,15 @@ createService({
         });
 
         router.put('/:id', async (req, res) => {
-            const { HoTen, Email, Lop, Nganh, GPA, MonDaHoc, SoTCTichLuy } = req.body || {};
+            const { HoTen, Email, Lop, Nganh, SoTCTichLuy } = req.body || {};
             if (!HoTen) throw new HttpError(400, 'Họ tên là bắt buộc');
             if (Email && !EMAIL_RE.test(Email)) throw new HttpError(400, 'Email không hợp lệ');
 
-            const gpaVal = GPA !== undefined && GPA !== '' ? Number(GPA) : 3.00;
             const tcVal = SoTCTichLuy !== undefined && SoTCTichLuy !== '' ? Number(SoTCTichLuy) : 110;
 
             const [r] = await pool.query(
-                'UPDATE SINHVIEN SET HoTen = ?, Email = ?, Lop = ?, Nganh = ?, GPA = ?, MonDaHoc = ?, SoTCTichLuy = ? WHERE MaSV = ?',
-                [HoTen, Email || null, Lop || null, Nganh || 'Công nghệ phần mềm', gpaVal, MonDaHoc || null, tcVal, req.params.id]
+                'UPDATE SINHVIEN SET HoTen = ?, Email = ?, Lop = ?, Nganh = ?, SoTCTichLuy = ? WHERE MaSV = ?',
+                [HoTen, Email || null, Lop || null, Nganh || 'Công nghệ phần mềm', tcVal, req.params.id]
             );
             if (r.affectedRows === 0) throw new HttpError(404, 'Không tìm thấy sinh viên');
             res.json({ success: true, message: 'Cập nhật sinh viên thành công' });
